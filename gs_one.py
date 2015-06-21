@@ -9,54 +9,66 @@
 
 # coding: UTF-8
 from __future__ import division
+import numpy as np
+"""
+m_prefs=np.array([[4,0,1,2,3],[2,1,0,3,4],[0,1,3,2,4]])
+f_prefs=np.array([[0,1,2,3],[1,0,3,2],[1,2,0,3],[0,3,2,1]])
+"""
+def array_to_dict(array):
+    dict = {}
+    for x, y in enumerate(array):
+        dict[x] = list(y)
+    return dict
 
-#ウィキペディアの例を使用
-males = {"m1":[1, 2, 3, 4],\
-        "m2":[3, 2, 1, 4],\
-        "m3":[1, 2, 4, 3],\
-        "m4":[3, 1, 4, 2]}
 
-females = {"f1":[1, 2, 3, 4],\
-        "f2":[2, 1, 4, 3],\
-        "f3":[2, 3, 1, 4],\
-        "f4":[1, 4, 3, 2]}
-
-def deferred_acceptance(males, females):
+def deferred_acceptance(m_prefs, f_prefs):
+    # 辞書に変換
+    males = array_to_dict(m_prefs)
+    females = array_to_dict(f_prefs)
     #男性に対し、ペアの女性を返す辞書。とりあえずペアがないから、空の状態
     matches = {}
-    for i in males.keys():
+    for i in range(len(m_prefs)):
         matches[i] = ""
     # 独身男性の集合
-    singles = males.keys()
+    unsettled = range(len(m_prefs))
     # 独身男性がいる限り、繰り返す。
-    while len(singles) != 0:
-        for i in singles:
+    while len(unsettled) != 0:
+        for i in unsettled:
             # プロポーズ済の人を候補者から消す
             candidate = males[i].pop(0)
             # 好みランクが最も高い人にプロポーズする。
-            proposed = "f{0}".format(candidate)
+            if candidate == (len(f_prefs)):
+                matches[i] = candidate
+                unsettled.remove(i)
             # まだ誰とも結婚してなければ自分のもの
-            if proposed not in matches.values():
-                matches[i] = proposed
-                singles.remove(i)
+            elif candidate not in matches.values():
+                matches[i] = candidate
+                unsettled.remove(i)
             # 誰かと結婚していれば、女性の好みにより成否が決定
             else:
                 # ペアについて、女性から男性を返す辞書
                 matches_inv = {v:k for k, v in matches.items()}
                 # 今の夫
-                matched_male = matches_inv[proposed]
+                matched_male = matches_inv[candidate]
                 # 女性の好み
-                pref = females[proposed]
+                pref = females[candidate]
                 # より好み＝好みで上位にランクされてるなら、略奪成功
-                if pref.index(int(i[1:])) < pref.index(int(matched_male[1:])):
-                    matches[i] = proposed
-                    singles.remove(i)
+                if pref.index(i) < pref.index((matched_male)):
                     # 妻を奪われ独身に戻る
                     matches[matched_male] = ""
-                    singles.append(matched_male)
-    return matches
-
-
+                    unsettled.append(matched_male)
+                    matches[i] = candidate
+                    unsettled.remove(i)
+    stable_mf = []
+    for i in matches.keys():
+        stable_mf.append(matches[i])
+    stable_fm = []
+    for i in range(len(f_prefs)):
+        if i in stable_mf:
+            stable_fm.append(stable_mf.index(i))
+        else:
+            stable_fm.append(len(m_prefs))
+    return stable_mf, stable_fm
 
 
 
