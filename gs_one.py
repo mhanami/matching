@@ -4,7 +4,7 @@
 #
 # Author:      Hanami Maeda, Atsushi Yamagishi
 #
-# Created:     13/06/2015
+# Created:     21/06/2015
 #-------------------------------------------------------------------------------
 
 # coding: UTF-8
@@ -20,7 +20,6 @@ def array_to_dict(array):
         dict[x] = list(y)
     return dict
 
-
 def deferred_acceptance(m_prefs, f_prefs):
     # 辞書に変換
     males = array_to_dict(m_prefs)
@@ -35,19 +34,20 @@ def deferred_acceptance(m_prefs, f_prefs):
     while len(unsettled) != 0:
         for i in unsettled:
             # プロポーズ済の人を候補者から消す
+            # 好みランクが最も高い人にプロポーズする。
             candidate = males[i].pop(0)
             # 好みランクが最も高い人にプロポーズする。
+            # 好みの人がもうおらず、一人でいたい場合
             if candidate == (len(f_prefs)):
                 matches[i] = candidate
                 unsettled.remove(i)
-                unsettled.sort()
             # まだ誰とも結婚してなければ自分のもの
             elif candidate not in matches.values():
                 pref = females[candidate]
-                if    pref.index(i) < pref.index(len(m_prefs)):
+                # 一人の方がマシじゃなければ成立
+                if pref.index(i) < pref.index(len(m_prefs)):
                     matches[i] = candidate
                     unsettled.remove(i)
-                    unsettled.sort()
             # 誰かと結婚していれば、女性の好みにより成否が決定
             else:
                 # ペアについて、女性から男性を返す辞書
@@ -64,9 +64,11 @@ def deferred_acceptance(m_prefs, f_prefs):
                     matches[i] = candidate
                     unsettled.remove(i)
                     unsettled.sort()
+    # 結果の辞書を一次元配列に変換
     stable_mf = []
     for i in matches.keys():
         stable_mf.append(matches[i])
+    # 女性から男性へのマッチングのリストも作る
     stable_fm = []
     for i in range(len(f_prefs)):
         if i in stable_mf:
@@ -74,7 +76,3 @@ def deferred_acceptance(m_prefs, f_prefs):
         else:
             stable_fm.append(len(m_prefs))
     return stable_mf, stable_fm
-
-
-
-
