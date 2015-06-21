@@ -40,10 +40,14 @@ def deferred_acceptance(m_prefs, f_prefs):
             if candidate == (len(f_prefs)):
                 matches[i] = candidate
                 unsettled.remove(i)
+                unsettled.sort()
             # まだ誰とも結婚してなければ自分のもの
             elif candidate not in matches.values():
-                matches[i] = candidate
-                unsettled.remove(i)
+                pref = females[candidate]
+                if    pref.index(i) < pref.index(len(m_prefs)):
+                    matches[i] = candidate
+                    unsettled.remove(i)
+                    unsettled.sort()
             # 誰かと結婚していれば、女性の好みにより成否が決定
             else:
                 # ペアについて、女性から男性を返す辞書
@@ -59,6 +63,7 @@ def deferred_acceptance(m_prefs, f_prefs):
                     unsettled.append(matched_male)
                     matches[i] = candidate
                     unsettled.remove(i)
+                    unsettled.sort()
     stable_mf = []
     for i in matches.keys():
         stable_mf.append(matches[i])
