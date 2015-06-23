@@ -91,15 +91,17 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
                 prop_matches[i] = prop_unmatched_mark
                 unsettled.remove(i)
 
-            # これは何をやっている処理でしょうか……？
+            # この処理は辛いので、prop側から見たマッチングとresp側から見たマッチングの両方を
+            # 使って処理しましょう
             """
+            # この場合分けは必要無さそう（if 0 < matches.values().count(candidate) < caps[candidate] の処理だけで十分）
             if caps[candidate] == 0:
-                matches[i] =""
-                unsettled.append(i)
+                matches[i] = "" # 最初から""なので、これは必要無さそうです
+                unsettled.append(i) # まだunsettledからremoveしていないので、これは必要無さそうです
 
             elif 0 <= matches.values().count(candidate) < caps[candidate]:
                 matches[i] = candidate
-                unsettled.remove(i)
+                unsettled.remove(i) # いきなりremoveするのではなく、iが誰かとマッチングしたらremoveするのがよさそう
                 if matches.values().count(candidate) == caps[candidate]:
                     matches_inv = {v:k for k, v in sort(matches.items())}
             """
