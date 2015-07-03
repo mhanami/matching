@@ -91,20 +91,6 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
                 prop_matches[i] = prop_unmatched_mark
                 unsettled.remove(i)
 
-            # この処理は辛いので、prop側から見たマッチングとresp側から見たマッチングの両方を
-            # 使って処理しましょう
-            """
-            # この場合分けは必要無さそう（if 0 < matches.values().count(candidate) < caps[candidate] の処理だけで十分）
-            if caps[candidate] == 0:
-                matches[i] = "" # 最初から""なので、これは必要無さそうです
-                unsettled.append(i) # まだunsettledからremoveしていないので、これは必要無さそうです
-
-            elif 0 <= matches.values().count(candidate) < caps[candidate]:
-                matches[i] = candidate
-                unsettled.remove(i) # いきなりremoveするのではなく、iが誰かとマッチングしたらremoveするのがよさそう
-                if matches.values().count(candidate) == caps[candidate]:
-                    matches_inv = {v:k for k, v in sort(matches.items())}
-            """
 
             # この先の処理を擬似コードで書きます。
 
@@ -117,7 +103,6 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
             #     Else:
             #        処理終了。unsettledから次のiをとってくる
             #
-
             # Else:（大学の現在の仮入学者数が、定員と同じなら）
             #     大学の現在の仮入学者（resp_matches[candidate]）の中で、一番大学にとって選好順序の低い受験者(worst_matchedとする)をとり出す
             #     If 自分とその受験者のランクを比べて、自分のほうが上なら:
@@ -128,10 +113,42 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
             #        resp_matches[candidate]からworst_matchedを削除する
             #        prop_matchesに{i: candidate}を加える
             #        resp_matches[candidate]に iを追加する
-            
             # 処理終了。forループを進めて次のiをとり出す
+            
+
+            # 以下の処理はcandidateがprop_unmatched_markでない場合だけ行うので、elseを追加
+            else:
+
+            # if len(str(resp_matches[candidate])) < len(str(caps[candidate])):
+            # -> strは数値等を文字列に変換する関数ですが、配列を文字に変換はできないと思います……
+            # -> capsは大学の定員の配列なので、もうすでに数値（int型）ではないでしょうか
+                if len(resp_matches[candidate]) < caps[candidate]:
+                    pref = resps[candidate]
+                    if pref.index(i) < pref.index(resp_unmatched_mark):
+                        unsettled.remove(i)
+                        prop_matches[i] = candidate
+                        resp_matches[candidate].append(i)
+                             
+                else:
+                    #worst_matched = max( pref.index(resp_matches[candidate][i] for i in len(str(resp_matches[candidate])) )
+                    # -> enemurate(pref)で(value, index)の2次元配列を取得し、valueの値でソートして最小値を求めるのがいいと思います
+                    worst_matched, worst_matched_rank = min(enumerate(pref), key=lambda x: x[0])
+                    
+                    # if resp_matches.index(worst_matched) > resp_matches.index(i):
+                    i_rank = pref.index(i)
+                    if worst_matched_rank > i_rank:
+                        unsettled.remove(i)
+                        unsettled.append(worst_matched)
+                        prop_matches.pop(worst_matched)
+                        resp_matches[candidate]
+                        prop_matches[i] = candidate
+                        resp_matches[candidate].append(i)
+                
+                    
+    return prop_matches, resp_matches
 
                                 
+
 
 if __name__ == "__main__":
 
@@ -159,12 +176,6 @@ if __name__ == "__main__":
     print("大学の受け入れ可能人数は")
     print(caps)
 
-    deferred_acceptance(prop_prefs, resp_prefs, caps)
-
-
-
-
-
-
+    print( deferred_acceptance(prop_prefs, resp_prefs, caps) )
 
 
