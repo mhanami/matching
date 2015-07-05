@@ -78,9 +78,9 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
     unsettled = list(range(prop_size))
 
     if caps is None:
-        indptr = np.arange(n+1)
+        indptr = np.arange(resp_size+1)
     else:
-        indptr = np.empty(n+1, dtype=int)
+        indptr = np.empty(resp_size+1, dtype=int)
         indptr[0] = 0
         np.cumsum(caps, out=indptr[1:])
 
