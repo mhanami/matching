@@ -35,7 +35,7 @@ def array_to_dict(array):
     return dict
 
 
-def deferred_acceptance(prop_prefs, resp_prefs, caps=False):
+def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
     # 選好表を辞書に変換
     props = array_to_dict(prop_prefs)
     resps = array_to_dict(resp_prefs)
@@ -60,7 +60,7 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=False):
     resp_unmatched_mark = resp_col - 1
 
     # capsが空なら、入学定員は全て1にする
-    if not caps:
+    if caps is None:
         non_caps_flag = True
         caps = np.ones(resp_size, dtype=int)
 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
                         [2, f_unmatched, 1, 0, 3]]
 
 
-    caps = [1, 1, 1]
+    caps = np.array([1, 1, 1])
     
     print("受験者の選好表は")
     print(prop_prefs)
@@ -158,6 +158,6 @@ if __name__ == "__main__":
     print("大学の受け入れ可能人数は")
     print(caps)
 
-    print( deferred_acceptance(resp_prefs, prop_prefs) )
+    print( deferred_acceptance(resp_prefs, prop_prefs, caps) )
 
 
