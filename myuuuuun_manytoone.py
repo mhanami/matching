@@ -23,7 +23,7 @@ def settings(m, n):
     # 大学の収容可能人数を(0 〜 proposerの総人数 までの範囲で適当に決める)
     caps = list(range((n)))
     for i in caps:
-        caps[i]=random.randint(0, m)
+        caps[i]=random.randint(1, m)
 
     return prop_prefs, resp_prefs, caps
 
@@ -134,7 +134,8 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
                 
 if __name__ == "__main__":
 
-    #prop_prefs, resp_prefs, caps = settings(59, 30)
+    prop_prefs, resp_prefs, caps = settings(3, 3)
+    """
     m_unmatched = 3
     prop_prefs = [[0, 1, 2, m_unmatched],
                         [2, 0, 1, m_unmatched],
@@ -148,6 +149,7 @@ if __name__ == "__main__":
 
 
     caps = np.array([1, 1, 1])
+    """
     
     print("受験者の選好表は")
     print(prop_prefs)
