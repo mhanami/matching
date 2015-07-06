@@ -3,7 +3,7 @@ from __future__ import division, print_function
 import numpy as np
 import random
 import math
-from itertools import chain
+
 
 
 # セッティングを関数化
@@ -23,9 +23,10 @@ def settings(m, n):
     # 大学の収容可能人数を(0 〜 proposerの総人数 までの範囲で適当に決める)
     caps = list(range((n)))
     for i in caps:
-        caps[i]=random.randint(1, m)
+        caps[i]=random.randint(0, m)
 
     return prop_prefs, resp_prefs, caps
+
 
 
 def array_to_dict(array):
@@ -59,14 +60,6 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
     prop_unmatched_mark = prop_col - 1
     resp_unmatched_mark = resp_col - 1
 
-    # capsが空なら、入学定員は全て1にする
-    if caps is None:
-        non_caps_flag = True
-        caps = np.ones(resp_size, dtype=int)
-
-    else:
-        non_caps_flag = False
-
     # 受験者側をkeyとしたマッチングリストだけだと辛いので、大学側をkeyとしたマッチングリストも作りましょう
     # prop_matchesは、受験者をkey、大学をvalueとした、{prop1: resp3, prop2: resp1,...} という辞書。
     # resp_matchesは、大学をkey、受験者（のリスト）をvalueとした、{resp1: [prop0, prop2, prop3,...], ...}という辞書。
@@ -79,9 +72,17 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
     for i in range(resp_size):
         resp_matches[i] = []
 
+
     # 未処理の受験者の集合（初期状態では、全ての受験者）
     # 入学先が見つかるか、行きたい大学全てに申し込んで断られたら、消去する
     unsettled = list(range(prop_size))
+
+    if caps is None:
+        indptr = np.arange(resp_size+1)
+    else:
+        indptr = np.empty(resp_size+1, dtype=int)
+        indptr[0] = 0
+        np.cumsum(caps, out=indptr[1:])
 
     # 未処理の受験者がいる限り、繰り返す。
     while len(unsettled) != 0:
@@ -91,6 +92,7 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
 
             # iの選好表から、（今までフラれていない中で）一番好きな大学をとり出す
             candidate = props[i].pop(0)
+            print("受験者 " + str(i) + " が、大学 " + str(candidate) + " に応募します")
 
             # もし取り出したcandidateがアンマッチ・マークなら、iはアンマッチで処理終了
             # マッチングにはprop_unmatched_markをいれる
@@ -98,68 +100,62 @@ def deferred_acceptance(prop_prefs, resp_prefs, caps=None):
                 prop_matches[i] = prop_unmatched_mark
                 unsettled.remove(i)
 
+
+            # この先の処理を擬似コードで書きます。
+
+            # If 大学（candidate）の現在の仮入学者（resp_matches[candidate]）の人数が、
+            # 受入可能人数（caps[candidate]）未満なら:
+            #     If 大学の選好リストで、自分がアンマッチ・マークよりも上位にいるなら:
+            #        iを未処理リスト（unsettled）から消す
+            #        prop_matchesに{i: candidate}を加える
+            #        resp_matches[candidate]に iを追加する（resp_matchesのvalueはリストなので、appendを使えばよい）
+            #     Else:
+            #        処理終了。unsettledから次のiをとってくる
+            #
+            # Else:（大学の現在の仮入学者数が、定員と同じなら）
+            #     大学の現在の仮入学者（resp_matches[candidate]）の中で、一番大学にとって選好順序の低い受験者(worst_matchedとする)をとり出す
+            #     If 自分とその受験者のランクを比べて、自分のほうが上なら:
+            #        (※この場合、自分がアンマッチ・マークより上位であることも保証される)
+            #        iを未処理リスト（unsettled）から消す
+            #        worst_matchedを未処理リストに追加する
+            #        prop_matchesから{worst_matched: candidate}を削除する
+            #        resp_matches[candidate]からworst_matchedを削除する
+            #        prop_matchesに{i: candidate}を加える
+            #        resp_matches[candidate]に iを追加する
+            # 処理終了。forループを進めて次のiをとり出す
+
+
+            # 以下の処理はcandidateがprop_unmatched_markでない場合だけ行うので、elseを追加
             else:
-                pref = resps[candidate]
+
+            # if len(str(resp_matches[candidate])) < len(str(caps[candidate])):
+            # -> strは数値等を文字列に変換する関数ですが、配列を文字に変換はできないと思います……
+            # -> capsは大学の定員の配列なので、もうすでに数値（int型）ではないでしょうか
                 if len(resp_matches[candidate]) < caps[candidate]:
+                    pref = resps[candidate]
                     if pref.index(i) < pref.index(resp_unmatched_mark):
                         unsettled.remove(i)
                         prop_matches[i] = candidate
                         resp_matches[candidate].append(i)
 
                 else:
-                    # すみません、ここのコード大分間違ってました……
-                    worst_matched = max(resp_matches[candidate], key=lambda x: pref.index(x))
-                    worst_matched_rank = pref.index(worst_matched)
-                    i_rank = pref.index(i)
+                    #worst_matched = max( pref.index(resp_matches[candidate][i] for i in len(str(resp_matches[candidate])) )
+                    # -> enemurate(pref)で(value, index)の2次元配列を取得し、valueの値でソートして最小値を求めるのがいいと思います
+                    worst_matched, worst_matched_rank = min(enumerate(pref), key=lambda x: x[0])
 
+                    # if resp_matches.index(worst_matched) > resp_matches.index(i):
+                    i_rank = pref.index(i)
                     if worst_matched_rank > i_rank:
                         unsettled.remove(i)
                         unsettled.append(worst_matched)
+                        prop_matches.pop(worst_matched)
+                        resp_matches[candidate]
                         prop_matches[i] = candidate
-                        resp_matches[candidate].remove(worst_matched)
                         resp_matches[candidate].append(i)
 
-    if non_caps_flag:
-        prop_matching = list(prop_matches.values())
-        resp_matching = list(chain.from_iterable([v if v else [resp_unmatched_mark] for v in resp_matches.values()]))
-        return prop_matching, resp_matching
+    resp_matched = resp_matches.values()
 
-    prop_matching = list(prop_matches.values())
-    resp_matching = list(chain.from_iterable(resp_matches.values()))
-    len_list = np.array([len(values) for values in resp_matches.values()])
-    indptr = np.r_[0, np.cumsum(len_list)]
-
-    return prop_matching, resp_matching, indptr
-
-                
-if __name__ == "__main__":
-
-    prop_prefs, resp_prefs, caps = settings(3, 3)
-    """
-    m_unmatched = 3
-    prop_prefs = [[0, 1, 2, m_unmatched],
-                        [2, 0, 1, m_unmatched],
-                        [1, 2, 0, m_unmatched],
-                        [2, 0, 1, m_unmatched]]
-
-    f_unmatched = 4
-    resp_prefs = [[2, 0, 1, 3, f_unmatched],
-                        [0, 1, 2, 3, f_unmatched],
-                        [2, f_unmatched, 1, 0, 3]]
-
-
-    caps = np.array([1, 1, 1])
-    """
-    
-    print("受験者の選好表は")
-    print(prop_prefs)
-
-    print("大学の選好表は")
-    print(resp_prefs)
-
-    print("大学の受け入れ可能人数は")
-    print(caps)
-
-    print( deferred_acceptance(resp_prefs, prop_prefs, caps) )
-
-
+    if caps is None:
+        return prop_matches, resp_matched
+    else:
+        return prop_matches, resp_matched, indptr
